@@ -2,491 +2,98 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Advokat client</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статус софта</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --bg: #000000;
-            --text: #ffffff;
-            --card: #1c1c1e;
-            --accent: #3b82f6;
-            --red: #ef4444;
-            --green: #22c55e;
-        }
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            padding: 20px; margin: 0; overflow-x: hidden;
+            background-color: var(--tg-theme-bg-color, #000000);
+            color: var(--tg-theme-text-color, #ffffff);
+            font-family: sans-serif;
+            padding: 15px;
+            margin: 0;
         }
-        .hidden { display: none !important; }
+        .header { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .quote { border-left: 3px solid #3b82f6; padding-left: 10px; color: #aaa; font-size: 14px; margin-bottom: 20px; }
+        .platform-title { background: #2563eb; color: white; padding: 5px 15px; border-radius: 20px; display: inline-block; font-weight: bold; margin-bottom: 15px; }
         
-        .btn {
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; padding: 15px; margin-bottom: 10px;
-            background-color: var(--card); color: var(--text);
-            border: none; border-radius: 10px; font-size: 16px; cursor: pointer;
-            box-sizing: border-box;
-        }
-        .btn:active { background-color: #2c2c2e; }
-        .row { display: flex; gap: 10px; }
-        .row .btn { width: 50%; }
-        .btn-red { background-color: var(--red); color: white; }
-        .btn-green { background-color: var(--green); color: black; font-weight: bold; }
+        .table-container { border: 1px solid #333; border-radius: 10px; overflow: hidden; }
+        .table-row { display: flex; border-bottom: 1px solid #333; cursor: pointer; }
+        .table-row:last-child { border-bottom: none; }
+        .table-row:active { background: #2c2c2e; }
         
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-            display: flex; align-items: center; justify-content: center; z-index: 1000;
-            padding: 20px; box-sizing: border-box;
-        }
-        .modal-content {
-            background: var(--card); padding: 20px; border-radius: 15px;
-            width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto;
-            position: relative; box-sizing: border-box;
-        }
-        .close-btn {
-            position: absolute; top: 10px; right: 10px;
-            background: #333; border: none; color: white;
-            width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer;
-        }
+        .table-cell-left { flex: 1; padding: 12px 15px; font-weight: bold; border-right: 1px solid #333; }
+        .table-cell-right { flex: 1; padding: 12px 15px; text-align: center; font-weight: bold; }
         
-        .catalog-btn {
-            display: flex; align-items: center; justify-content: center;
-            padding: 15px; background: transparent; color: white;
-            border: none; font-size: 20px; width: 100%; margin-bottom: 15px; cursor: pointer;
-        }
-        .catalog-btn .icon { margin-right: 15px; font-size: 24px; }
+        .status-green { color: #22c55e; }
+        .status-red { color: #ef4444; }
         
-        .avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px; display: block; border: 2px solid var(--accent); }
-        
-        #toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--red); color: white; padding: 12px 24px; border-radius: 10px;
-            font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 2000;
-            text-align: center; width: 80%;
-        }
+        .footer { margin-top: 20px; font-size: 12px; color: #666; text-align: right; }
     </style>
 </head>
 <body>
+    <div class="header">📊 Статус софта</div>
+    <div class="quote">Рекомендация к использованию не дает 100% гарантии, что Вы не будете забанены.</div>
+    
+    <p>Здесь отображается статус каждого софта из нашего каталога, рекомендуем следить за статусом.</p>
+    
+    <p><b>Определение статусов:</b></p>
+    <ul style="padding-left: 20px; font-size: 14px; color: #ccc;">
+        <li><b>Рекомендуем</b> — Обновлен и рекомендован для игры.</li>
+        <li><b>Не рекомендуем</b> — Есть многочисленные жалобы.</li>
+        <li><b>На обновление</b> — Товар находится на стадии обновлении.</li>
+    </ul>
 
-    <!-- ================= ГЛАВНЫЙ ЭКРАН ================= -->
-    <div id="main-screen">
-        <h2 style="text-align: center;">🎧 Advokat client 🎧</h2>
-        <p style="text-align: center; color: gray; margin-top: -10px;">Лучший Мод</p>
+    <div class="platform-title">Oxide Survival Island</div>
 
-        <div style="background: #1c1c1e; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-            <p id="status-lebro">🤍 LebroDLC: <span style="color:#ef4444;">🔴 На обновлении</span></p>
-            <p id="status-magic">🤍 MagicDLC: <span style="color:#ef4444;">🔴 На обновлении</span></p>
-            <p id="status-aqreh">🤍 Aqreh iOS: <span style="color:#22c55e;">🟢 Обновлён</span></p>
-            <p style="margin-top: 15px; color: #a0a0a0;">Выберите действие:</p>
+    <div class="table-container">
+        <!-- Строки таблицы (при клике вызывается функция sendAction) -->
+        <div class="table-row" onclick="sendAction('JARVIS')">
+            <div class="table-cell-left">JARVIS</div>
+            <div class="table-cell-right status-green">Рекомендуем</div>
         </div>
-
-        <button class="btn" onclick="showScreen('catalog-screen')">🛍 Товары</button>
-        <div class="row">
-            <button class="btn" onclick="showToast('В разработке')">🎁 Подарить ключ</button>
-            <button class="btn" onclick="showPurchases()">📁 Мои покупки</button>
+        <div class="table-row" onclick="sendAction('MAGIC VIP')">
+            <div class="table-cell-left">MAGIC VIP</div>
+            <div class="table-cell-right status-red">На обновление</div>
         </div>
-        <div class="row">
-            <button class="btn" onclick="openProfile()">👤 Профиль</button>
-            <button class="btn" onclick="showToast('В разработке')">📊 Статистика</button>
+        <div class="table-row" onclick="sendAction('MAGIC LITE')">
+            <div class="table-cell-left">MAGIC LITE</div>
+            <div class="table-cell-right status-red">На обновление</div>
         </div>
-        <div class="row">
-            <button class="btn" onclick="showToast('В разработке')">🔍 Поиск</button>
-            <button class="btn" onclick="showScreen('help-screen')">ℹ️ Помощь</button>
+        <div class="table-row" onclick="sendAction('CRY4ME')">
+            <div class="table-cell-left">CRY4ME</div>
+            <div class="table-cell-right status-red">На обновление</div>
         </div>
-        <button class="btn" onclick="openReferral()">👥 Реферальная программа</button>
-        <button class="btn" onclick="openTgLink('https://t.me/+7QwvJofq6PJmMTJi')">💬 Отзывы ↗</button>
-        
-        <button id="admin-btn" class="btn hidden" style="margin-top:20px; border: 1px solid #555;" onclick="showToast('Админка в боте')">⚙️ Админ-панель (в боте)</button>
-    </div>
-
-    <!-- ================= КАТАЛОГ ================= -->
-    <div id="catalog-screen" class="hidden">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 30px; margin-top: 20px;">
-            <h3>Выберите категорию:</h3>
-            <span id="clock" style="color: #555;">--:--</span>
+        <div class="table-row" onclick="sendAction('AQREH')">
+            <div class="table-cell-left">AQREH</div>
+            <div class="table-cell-right status-red">На обновление</div>
         </div>
-        <button class="catalog-btn" onclick="openVersions('LebroDLC')"><span class="icon">🛸</span> LebroDLC</button>
-        <button class="catalog-btn" onclick="openVersions('MagicDLC')"><span class="icon">🪄</span> MagicDLC</button>
-        <button class="catalog-btn" onclick="openTariffs('Aqreh iOS')"><span class="icon">🧠</span> Aqreh iOS</button>
-        <button class="catalog-btn" onclick="openTariffs('Почты Google')"><span class="icon">✉️</span> Почты Google</button>
-        <button class="catalog-btn" onclick="showScreen('main-screen')" style="margin-top: 30px;"><span class="icon">↩️</span> Назад</button>
-    </div>
-
-    <!-- ================= ВЫБОР ВЕРСИИ ================= -->
-    <div id="version-screen" class="hidden">
-        <h3 id="version-title">Выберите версию:</h3>
-        <button class="btn" onclick="openTariffs('VIP')">⭐ VIP</button>
-        <button class="btn" onclick="openTariffs('Lite')">🪄 Lite</button>
-        <button class="btn" onclick="showScreen('catalog-screen')" style="margin-top:20px;">↩️ Назад</button>
-    </div>
-
-    <!-- ================= ТАРИФЫ ================= -->
-    <div id="tariffs-screen" class="hidden">
-        <h3 id="tariff-title">Название товара</h3>
-        <p id="tariff-desc" style="color: gray; font-size: 14px;">Выберите подходящий тариф</p>
-        <h4 style="margin-top: 20px;">Доступные тарифы:</h4>
-        <div id="tariffs-list">
-            <p style="text-align:center; color:gray;">Загрузка...</p>
+        <div class="table-row" onclick="sendAction('ULTIMA')">
+            <div class="table-cell-left">ULTIMA</div>
+            <div class="table-cell-right status-green">Рекомендуем</div>
         </div>
-        <button class="btn" onclick="showScreen('catalog-screen')" style="margin-top:20px;">↩️ Назад</button>
-    </div>
-
-    <!-- ================= ЭКРАН ПОКУПОК ================= -->
-    <div id="purchases-screen" class="hidden">
-        <h3>📁 Мои покупки</h3>
-        <div id="purchases-list" style="background: #1c1c1e; padding: 15px; border-radius: 12px; min-height: 100px;">
-            <!-- Сюда подгрузятся покупки -->
+        <div class="table-row" onclick="sendAction('TRACE X')">
+            <div class="table-cell-left">TRACE X</div>
+            <div class="table-cell-right status-red">На обновление</div>
         </div>
-        <button class="btn" onclick="showScreen('main-screen')" style="margin-top:20px;">↩️ В главное меню</button>
-    </div>
-
-    <!-- ================= ЭКРАН ПОМОЩИ ================= -->
-    <div id="help-screen" class="hidden">
-        <h3>📋 Помощь</h3>
-        <p style="color:gray;">Выберите нужный раздел:</p>
-        <button class="btn" style="color: var(--red);" onclick="openTgLink('https://t.me/Advokat_mngr')">🆘 Поддержка ↗</button>
-        <button class="btn" onclick="openModal('modal-privacy')">📄 Политика конфиденциальности</button>
-        <button class="btn" onclick="openModal('modal-rules')">📜 Правила пользования</button>
-        <button class="btn" onclick="showScreen('main-screen')" style="margin-top:20px;">↩️ Назад</button>
-    </div>
-
-    <!-- ================= МОДАЛКА ПРОФИЛЯ ================= -->
-    <div id="modal-profile" class="modal-overlay hidden">
-        <div class="modal-content" style="text-align: center;">
-            <button class="close-btn" onclick="closeModal('modal-profile')">✕</button>
-            <img id="prof-avatar" class="avatar" src="" alt="Avatar">
-            <h2 id="prof-name" style="margin:0;">Имя</h2>
-            <p id="prof-username" style="color: var(--accent); margin-top: 5px;">@username</p>
-            
-            <div style="text-align: left; background: #111; padding: 15px; border-radius: 10px; margin-top: 15px;">
-                <p>🛍 Всего покупок: <b id="prof-count">0 шт.</b></p>
-                <p>💵 Всего потрачено: <b id="prof-spent">0₽</b></p>
-                <p>👑 Место в топе: <b>#-</b></p>
-                <hr style="border-color: #333; margin: 10px 0;">
-                <p>📁 Купленные товары:</p>
-                <div id="prof-items" style="font-size: 14px; color: #aaa;">У вас пока нет покупок.</div>
-            </div>
-            
-            <button class="btn btn-red" style="margin-top: 15px;" onclick="openTgLink('https://t.me/Advokat_mngr')">🆘 Связаться с менеджером ↗</button>
+        <div class="table-row" onclick="sendAction('HUT MOD')">
+            <div class="table-cell-left">HUT MOD</div>
+            <div class="table-cell-right status-red">На обновление</div>
         </div>
     </div>
 
-    <!-- ================= МОДАЛКА РЕФЕРАЛКИ ================= -->
-    <div id="modal-referral" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal('modal-referral')">✕</button>
-            <h3>🔗 РЕФЕРАЛЬНАЯ ПРОГРАММА</h3>
-            <hr style="border-color: #333;">
-            <p>💰 <i>Ваши баллы:</i> <b id="ref-balance">0</b></p>
-            <p>👥 <i>Приглашено человек:</i> <b id="ref-count">0</b></p>
-            <p>🎁 <i>За каждого человека:</i> +4 баллов</p>
-            <hr style="border-color: #333;">
-            <h4>⭐ Как это работает</h4>
-            <p style="font-size: 14px; line-height: 1.5; color: #ccc;">
-                ✓ Отправьте человеку вашу ссылку<br>
-                ✓ Когда он запустит бота — <i>вы получите баллы</i><br>
-                ✓ 1 балл = 1₽ — <i>можно списывать при оплате</i>
-            </p>
-            <hr style="border-color: #333;">
-            <p>🔗 <b>Ваша ссылка:</b></p>
-            <div id="ref-link" style="background: #111; padding: 10px; border-radius: 5px; word-break: break-all; font-family: monospace; font-size: 13px;">...</div>
-        </div>
-    </div>
+    <div class="footer">Последние изменения: 08.11 в 14:10</div>
 
-    <!-- ================= МОДАЛКИ ТЕКСТА ================= -->
-    <div id="modal-privacy" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal('modal-privacy')">✕</button>
-            <h3 style="text-align:center;">📄 Политика</h3>
-            <div style="font-size: 13px; color: #ccc; line-height: 1.5;">
-                <p>Проект «ADVOKAT MAUD» уважает вашу конфиденциальность...</p>
-                <p><b>1. Сбор данных:</b> Telegram ID, username, история заказов.</p>
-                <p><b>2. Использование:</b> Для обработки заказов и поддержки.</p>
-                <p><b>3. Передача:</b> Не передаются третьим лицам.</p>
-                <p><b>4. Хранение:</b> На защищённых серверах.</p>
-                <p><i>Дата: 08.11.2026</i></p>
-            </div>
-            <button class="btn" style="margin-top:15px;" onclick="openWebLink('https://telegra.ph/Politika-konfidencialnosti-08-01-83')">📖 Открыть полную версию ↗</button>
-        </div>
-    </div>
-
-    <div id="modal-rules" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal('modal-rules')">✕</button>
-            <h3 style="text-align:center;">📜 Правила</h3>
-            <div style="font-size: 13px; color: #ccc; line-height: 1.5;">
-                <p><b>1. Общие положения:</b> Используя бота, вы соглашаетесь с правилами.</p>
-                <p><b>2. Услуги:</b> Предоставляются цифровые товары.</p>
-                <p><b>3. Возврат:</b> Возврат средств не производится.</p>
-                <p><b>4. Ответственность:</b> Проект не несёт ответственности.</p>
-                <p><b>5. Контакты:</b> @Advokat_mngr</p>
-                <p><i>Дата: 08.11.2026</i></p>
-            </div>
-            <button class="btn" style="margin-top:15px;" onclick="openWebLink('https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19')">📖 Открыть полную версию ↗</button>
-        </div>
-    </div>
-
-    <!-- ================= МОДАЛКА ПОДТВЕРЖДЕНИЯ ОПЛАТЫ ================= -->
-    <div id="modal-pay-confirm" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 style="color: #fbbf24; text-align: center;">⚠️ Подтверждение</h3>
-            <p style="font-size: 14px; text-align: center;">Вы действительно хотите оплатить <b id="confirm-item-name">товар</b>?</p>
-            <div style="display: flex; gap: 10px; flex-direction: column; margin-top: 20px;">
-                <button class="btn btn-green" onclick="payWithStars()">⭐ Оплатить звёздами</button>
-                <button class="btn" style="background: var(--accent); color: white;" onclick="payWithRubles()">💳 Оплатить картой / СБП</button>
-            </div>
-            <button class="btn" onclick="closeModal('modal-pay-confirm')" style="margin-top:10px;">❌ Отмена</button>
-        </div>
-    </div>
-
-    <div id="toast">🚧 В разработке</div>
-
-    <!-- ================= JAVASCRIPT ================= -->
     <script>
-        // Безопасная инициализация Telegram
-        let tg = null;
-        try {
-            if (window.Telegram && window.Telegram.WebApp) {
-                tg = window.Telegram.WebApp;
-                tg.expand();
-            }
-        } catch (e) { console.log("WebApp init error", e); }
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-        // ТВОИ ССЫЛКИ (вставлены)
-        const CONFIG = {
-            GET_PRODUCTS: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmR-JHhQ9PAebVpN0dkdpwiAQfVuP87_r7GDtB9_SOoQ-mm_sDrUqZkhLBqLBdazRKxkvHZ8PCjC0BpZv9hqfOgVqA0dTor17iAky-0XC64k0jvXxKxWSTT2OdcWfAJjUJAgaJPEI12VbX9teUlqEd1tQHgLElQsSWmyW5zynTLUoA42C_JjmF-Krmjg1ejRiL",
-            GET_PROFILE: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8Fwm99qFLhbTFQ3sTYq83YRSqx4dOKwmG2oP0cyR0biAt5Dn-0_YoYFEG4otpeJieFjPF0hyEVxSMTCYkfQRhqt_axefW703sXUS15FdJ9MMZcxsIqAif8NbPDVaJM-4IjgS97kN3oKHBBm4GMRAc241jySDrYtJoSv37Gz1nzbvrhJibZdjOFNcOnpRdo1jpQkw",
-            GET_REFERRAL: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmUQi9iZ35CDFXDKA_MMERjnpBcLtcVvUyN2k1dWadOc2AoUZWcnfVbi21tnIcGlQoVTQrb6BFlhINZET_FqW1Zc6-lujhu03d4VR7rtFeqGTZNEofRBukwPDUnBbiONT1j3ofGdbMEv_JK9CPsYATyFZ3wWZ48d4APT0y0YxGNiFUNH8kwUPX9UqP0BJdXTuW",
-            CREATE_PAYMENT: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmllM5PaKWx8n6eouQh6e7V9fXa5HiXlTkM9bQrKdkwCw1LoVMy2xsN5nHjlk7Ny8FIQeMJPMb1F97ua09iMLmYwv0xgvp5xepVgDIz3zZuod1QKJBTk0VXlyCAX9_YL4jgoTpi7J-m2enUKtnrearyJ5MnWln0fI9OkRPs43bW3V-4zlvgUy_vxVZa-IsIoER",
-            CREATE_STARS: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8Fwmqvc0ojaidEz4O9CNIkM_muo02iCmWjwn1ANqIze0IgiO9DW6Eo03KXjX3LKcFKyS_R2Rz0DhRVLBInWFLgDgyPDGgZhF5yvF7kdSJbjM-TWwszuTOOFX1ZjyDiGvX185n06r0jacKUse0Kwpqb4E_Gps0tZqwe098RSf-1d6BllFGwJ8CQzPGtiHrcut7i9xBzMkOTfD3RzG2nVrywJhxQ%3D%3D"
-        };
-
-        // Безопасное получение данных пользователя
-        let USER_ID = 0;
-        try { USER_ID = tg?.initDataUnsafe?.user?.id || 0; } catch (e) {}
-
-        const ADMIN_ID = 7795597586;
-        const BOT_USERNAME = "ТВОЙ_БОТ"; // ЗАМЕНИ на юзернейм своего бота!
-
-        let currentProductBase = "";
-        let selectedTariff = null;
-        let allProducts = [];
-
-        // --- Безопасные методы для ссылок ---
-        function openTgLink(url) {
-            if (tg) tg.openTelegramLink(url);
-            else window.open(url, '_blank');
+        function sendAction(productName) {
+            // Отправляем данные боту (название софта)
+            tg.sendData(JSON.stringify({ action: "show_product", product: productName }));
+            // Закрываем мини-апп, чтобы бот отправил сообщение в чат
+            tg.close();
         }
-        
-        function openWebLink(url) {
-            if (tg) tg.openLink(url);
-            else window.open(url, '_blank');
-        }
-
-        // --- Управление экранами ---
-        function showScreen(id) {
-            document.querySelectorAll('body > div').forEach(el => {
-                if (el.id && el.id !== 'toast') el.classList.add('hidden');
-            });
-            const screen = document.getElementById(id);
-            if (screen) screen.classList.remove('hidden');
-            if (id === 'catalog-screen') startClock();
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            if (!toast) return;
-            toast.textContent = "🚧 " + msg;
-            toast.style.opacity = 1;
-            setTimeout(() => toast.style.opacity = 0, 2500);
-        }
-
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        
-        let clockInterval;
-        function startClock() {
-            const clock = document.getElementById('clock');
-            if (!clock) return;
-            if (clockInterval) clearInterval(clockInterval);
-            clockInterval = setInterval(() => {
-                clock.textContent = new Date().toLocaleTimeString('ru-RU');
-            }, 1000);
-        }
-
-        // --- Запросы к базе ---
-        async function apiRequest(url, data = {}) {
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                return await response.json();
-            } catch (e) {
-                console.error("API Error:", e);
-                return null;
-            }
-        }
-
-        // --- Каталог ---
-        function openVersions(baseName) {
-            currentProductBase = baseName;
-            document.getElementById('version-title').textContent = baseName + " - Выберите версию:";
-            showScreen('version-screen');
-        }
-
-        function openTariffs(version) {
-            let fullName = currentProductBase ? currentProductBase + " " + version : version;
-            document.getElementById('tariff-title').textContent = fullName;
-            
-            const container = document.getElementById('tariffs-list');
-            container.innerHTML = '';
-
-            const filtered = allProducts.filter(p => p.name && p.name.includes(fullName));
-            
-            if (filtered.length === 0) {
-                container.innerHTML = "<p style='color:gray; text-align:center;'>Нет доступных тарифов</p>";
-            }
-
-            filtered.forEach(p => {
-                const inStock = p.stock > 0;
-                const icon = inStock ? "✓" : "⊗";
-                const btn = document.createElement('button');
-                btn.className = 'btn';
-                btn.innerHTML = `${icon} ${p.name} — ${p.price_rub}₽ ${inStock ? '('+p.stock+' шт.)' : ''}`;
-                
-                if (inStock) {
-                    btn.onclick = () => openPayment(p);
-                } else {
-                    btn.onclick = () => showToast("Товара нет в наличии");
-                    btn.style.color = "#666";
-                }
-                container.appendChild(btn);
-            });
-            showScreen('tariffs-screen');
-        }
-
-        // --- Оплата ---
-        function openPayment(product) {
-            selectedTariff = product;
-            document.getElementById('confirm-item-name').textContent = product.name;
-            openModal('modal-pay-confirm');
-        }
-
-        async function payWithRubles() {
-            closeModal('modal-pay-confirm');
-            showToast("Создаём счёт...");
-            
-            const res = await apiRequest(CONFIG.CREATE_PAYMENT, {
-                user_id: USER_ID,
-                amount: selectedTariff.price_rub,
-                order_id: "ORD_" + Date.now()
-            });
-
-            if (res && res.url) {
-                openWebLink(res.url);
-            } else {
-                showToast("Ошибка платежа.");
-            }
-        }
-
-        async function payWithStars() {
-            closeModal('modal-pay-confirm');
-            const res = await apiRequest(CONFIG.CREATE_STARS, {
-                user_id: USER_ID,
-                amount: selectedTariff.price_stars,
-                product_name: selectedTariff.name
-            });
-
-            if (res && res.ok) {
-                if (tg) tg.close();
-            } else {
-                showToast("Ошибка.");
-            }
-        }
-
-        // --- Профиль ---
-        async function openProfile() {
-            try {
-                const user = tg?.initDataUnsafe?.user || { first_name: 'Гость', username: 'guest' };
-                document.getElementById('prof-avatar').src = user.photo_url || 'https://ui-avatars.com/api/?name=' + user.first_name + '&background=random';
-                document.getElementById('prof-name').textContent = user.first_name;
-                document.getElementById('prof-username').textContent = user.username ? '@' + user.username : '';
-            } catch (e) {}
-
-            const data = await apiRequest(CONFIG.GET_PROFILE, { user_id: USER_ID });
-            
-            if (data && data.ok) {
-                document.getElementById('prof-count').textContent = (data.purchases_count || 0) + ' шт.';
-                document.getElementById('prof-spent').textContent = (data.total_spent || 0) + '₽';
-                
-                const itemsDiv = document.getElementById('prof-items');
-                if (data.purchases && data.purchases.length > 0) {
-                    itemsDiv.innerHTML = data.purchases.map(p => `• ${p.name} — ${p.amount}₽`).join('<br>');
-                } else {
-                    itemsDiv.innerHTML = "У вас пока нет покупок.";
-                }
-            }
-            openModal('modal-profile');
-        }
-
-        // --- Рефералка ---
-        async function openReferral() {
-            const data = await apiRequest(CONFIG.GET_REFERRAL, { user_id: USER_ID });
-            
-            if (data && data.ok) {
-                document.getElementById('ref-balance').textContent = data.balance || 0;
-                document.getElementById('ref-count').textContent = data.referred_count || 0;
-            }
-            document.getElementById('ref-link').textContent = `https://t.me/${BOT_USERNAME}?start=ref_${USER_ID}`;
-            openModal('modal-referral');
-        }
-
-        // --- Мои покупки ---
-        async function showPurchases() {
-            const data = await apiRequest(CONFIG.GET_PROFILE, { user_id: USER_ID });
-            const list = document.getElementById('purchases-list');
-            
-            if (data && data.ok && data.purchases && data.purchases.length > 0) {
-                list.innerHTML = data.purchases.map(p => `
-                    <div style="border-bottom: 1px solid #333; padding: 10px 0;">
-                        <b>${p.name}</b><br>
-                        <span style="color:gray; font-size: 12px;">${p.amount}₽</span>
-                    </div>
-                `).join('');
-            } else {
-                list.innerHTML = "<p style='text-align:center; color:gray;'>У вас пока нет покупок</p>";
-            }
-            showScreen('purchases-screen');
-        }
-
-        // --- Старт приложения ---
-        window.onload = async () => {
-            if (USER_ID === ADMIN_ID) {
-                const adminBtn = document.getElementById('admin-btn');
-                if (adminBtn) adminBtn.classList.remove('hidden');
-            }
-            
-            // ФОЛЛБЕК (временные товары, если бот не ответил)
-            allProducts = [
-                { name: "LebroDLC Lite 1 день", price_rub: 160, price_stars: 260, stock: 10 },
-                { name: "LebroDLC VIP 1 день", price_rub: 200, price_stars: 300, stock: 5 },
-                { name: "MagicDLC Lite 1 день", price_rub: 160, price_stars: 260, stock: 8 },
-                { name: "MagicDLC VIP 7 дней", price_rub: 1100, price_stars: 1500, stock: 3 },
-                { name: "Aqreh iOS 1 день", price_rub: 199, price_stars: 280, stock: 15 },
-                { name: "Почты Google", price_rub: 30, price_stars: 50, stock: 20 }
-            ];
-
-            // Пытаемся загрузить реальные данные
-            const data = await apiRequest(CONFIG.GET_PRODUCTS, { user_id: USER_ID });
-            if (data && data.products && data.products.length > 0) {
-                allProducts = data.products;
-            }
-        };
     </script>
 </body>
 </html>
