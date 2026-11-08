@@ -28,19 +28,18 @@
             width: 100%; padding: 15px; margin-bottom: 10px;
             background-color: var(--card); color: var(--text);
             border: none; border-radius: 10px; font-size: 16px; cursor: pointer;
-            transition: background 0.2s; box-sizing: border-box;
+            box-sizing: border-box;
         }
         .btn:active { background-color: #2c2c2e; }
         .row { display: flex; gap: 10px; }
         .row .btn { width: 50%; }
         .btn-red { background-color: var(--red); color: white; }
         .btn-green { background-color: var(--green); color: black; font-weight: bold; }
-        .btn-disabled { opacity: 0.5; pointer-events: none; }
         
         /* Модалки */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
             display: flex; align-items: center; justify-content: center; z-index: 1000;
             padding: 20px; box-sizing: border-box;
         }
@@ -53,7 +52,6 @@
             position: absolute; top: 10px; right: 10px;
             background: #333; border: none; color: white;
             width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
         }
         
         /* Каталог */
@@ -72,7 +70,7 @@
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             background: var(--red); color: white; padding: 12px 24px; border-radius: 10px;
             font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 2000;
-            text-align: center; width: 80%; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            text-align: center; width: 80%;
         }
     </style>
 </head>
@@ -104,7 +102,7 @@
             <button class="btn" onclick="showScreen('help-screen')">ℹ️ Помощь</button>
         </div>
         <button class="btn" onclick="openReferral()">👥 Реферальная программа</button>
-        <button class="btn" onclick="tg.openTelegramLink('https://t.me/+7QwvJofq6PJmMTJi')">💬 Отзывы ↗</button>
+        <button class="btn" onclick="openTgLink('https://t.me/+7QwvJofq6PJmMTJi')">💬 Отзывы ↗</button>
         
         <button id="admin-btn" class="btn hidden" style="margin-top:20px; border: 1px solid #555;" onclick="showToast('Админка в боте')">⚙️ Админ-панель (в боте)</button>
     </div>
@@ -122,11 +120,11 @@
         <button class="catalog-btn" onclick="showScreen('main-screen')" style="margin-top: 30px;"><span class="icon">↩️</span> Назад</button>
     </div>
 
-    <!-- ================= ВЫБОР ВЕРСИИ (VIP/Lite) ================= -->
+    <!-- ================= ВЫБОР ВЕРСИИ ================= -->
     <div id="version-screen" class="hidden">
         <h3 id="version-title">Выберите версию:</h3>
-        <button class="btn" onclick="openTariffs(currentProduct + ' VIP')">⭐ VIP</button>
-        <button class="btn" onclick="openTariffs(currentProduct + ' Lite')">🪄 Lite</button>
+        <button class="btn" onclick="openTariffs('VIP')">⭐ VIP</button>
+        <button class="btn" onclick="openTariffs('Lite')">🪄 Lite</button>
         <button class="btn" onclick="showScreen('catalog-screen')" style="margin-top:20px;">↩️ Назад</button>
     </div>
 
@@ -138,7 +136,7 @@
         <div id="tariffs-list">
             <p style="text-align:center; color:gray;">Загрузка...</p>
         </div>
-        <button class="btn" onclick="goBackFromTariffs()" style="margin-top:20px;">↩️ Назад</button>
+        <button class="btn" onclick="showScreen('catalog-screen')" style="margin-top:20px;">↩️ Назад</button>
     </div>
 
     <!-- ================= ЭКРАН ПОКУПОК ================= -->
@@ -154,7 +152,7 @@
     <div id="help-screen" class="hidden">
         <h3>📋 Помощь</h3>
         <p style="color:gray;">Выберите нужный раздел:</p>
-        <button class="btn" style="color: var(--red);" onclick="tg.openTelegramLink('https://t.me/Advokat_mngr')">🆘 Поддержка ↗</button>
+        <button class="btn" style="color: var(--red);" onclick="openTgLink('https://t.me/Advokat_mngr')">🆘 Поддержка ↗</button>
         <button class="btn" onclick="openModal('modal-privacy')">📄 Политика конфиденциальности</button>
         <button class="btn" onclick="openModal('modal-rules')">📜 Правила пользования</button>
         <button class="btn" onclick="showScreen('main-screen')" style="margin-top:20px;">↩️ Назад</button>
@@ -177,7 +175,7 @@
                 <div id="prof-items" style="font-size: 14px; color: #aaa;">У вас пока нет покупок.</div>
             </div>
             
-            <button class="btn btn-red" style="margin-top: 15px;" onclick="tg.openTelegramLink('https://t.me/Advokat_mngr')">🆘 Связаться с менеджером ↗</button>
+            <button class="btn btn-red" style="margin-top: 15px;" onclick="openTgLink('https://t.me/Advokat_mngr')">🆘 Связаться с менеджером ↗</button>
         </div>
     </div>
 
@@ -203,7 +201,7 @@
         </div>
     </div>
 
-    <!-- ================= МОДАЛКА ПРАВИЛ ================= -->
+    <!-- ================= МОДАЛКИ ТЕКСТА ================= -->
     <div id="modal-privacy" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal('modal-privacy')">✕</button>
@@ -216,7 +214,7 @@
                 <p><b>4. Хранение:</b> На защищённых серверах.</p>
                 <p><i>Дата: 08.11.2026</i></p>
             </div>
-            <button class="btn" style="margin-top:15px;" onclick="tg.openLink('https://telegra.ph/Politika-konfidencialnosti-08-01-83')">📖 Открыть полную версию ↗</button>
+            <button class="btn" style="margin-top:15px;" onclick="openWebLink('https://telegra.ph/Politika-konfidencialnosti-08-01-83')">📖 Открыть полную версию ↗</button>
         </div>
     </div>
 
@@ -232,7 +230,7 @@
                 <p><b>5. Контакты:</b> @Advokat_mngr</p>
                 <p><i>Дата: 08.11.2026</i></p>
             </div>
-            <button class="btn" style="margin-top:15px;" onclick="tg.openLink('https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19')">📖 Открыть полную версию ↗</button>
+            <button class="btn" style="margin-top:15px;" onclick="openWebLink('https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19')">📖 Открыть полную версию ↗</button>
         </div>
     </div>
 
@@ -254,47 +252,64 @@
 
     <!-- ================= JAVASCRIPT ================= -->
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // Инициализация Telegram WebApp с защитой от ошибок
+        let tg;
+        try {
+            tg = window.Telegram.WebApp;
+            tg.expand();
+        } catch (e) {
+            console.log("Telegram WebApp не доступен (тест в браузере)");
+        }
 
         // =====================================================================
-        // ⚠️ СЮДА ВСТАВЬ ССЫЛКИ НА ВЕБХУКИ ИЗ TELEBOT CREATOR ⚠️
-        // (Создай в TBC вебхуки с такими же названиями и скопируй их URL)
+        // ⚠️ ССЫЛКИ НА ВЕБХУКИ ИЗ TELEBOT CREATOR (замени на свои, если они другие)
         // =====================================================================
         const CONFIG = {
-            const CONFIG = {
-    GET_PRODUCTS: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmR-JHhQ9PAebVpN0dkdpwiAQfVuP87_r7GDtB9_SOoQ-mm_sDrUqZkhLBqLBdazRKxkvHZ8PCjC0BpZv9hqfOgVqA0dTor17iAky-0XC64k0jvXxKxWSTT2OdcWfAJjUJAgaJPEI12VbX9teUlqEd1tQHgLElQsSWmyW5zynTLUoA42C_JjmF-Krmjg1ejRiL",
-    
-    GET_PROFILE: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8Fwm99qFLhbTFQ3sTYq83YRSqx4dOKwmG2oP0cyR0biAt5Dn-0_YoYFEG4otpeJieFjPF0hyEVxSMTCYkfQRhqt_axefW703sXUS15FdJ9MMZcxsIqAif8NbPDVaJM-4IjgS97kN3oKHBBm4GMRAc241jySDrYtJoSv37Gz1nzbvrhJibZdjOFNcOnpRdo1jpQkw",
-    
-    GET_REFERRAL: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmUQi9iZ35CDFXDKA_MMERjnpBcLtcVvUyN2k1dWadOc2AoUZWcnfVbi21tnIcGlQoVTQrb6BFlhINZET_FqW1Zc6-lujhu03d4VR7rtFeqGTZNEofRBukwPDUnBbiONT1j3ofGdbMEv_JK9CPsYATyFZ3wWZ48d4APT0y0YxGNiFUNH8kwUPX9UqP0BJdXTuW",
-    
-    CREATE_PAYMENT: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmllM5PaKWx8n6eouQh6e7V9fXa5HiXlTkM9bQrKdkwCw1LoVMy2xsN5nHjlk7Ny8FIQeMJPMb1F97ua09iMLmYwv0xgvp5xepVgDIz3zZuod1QKJBTk0VXlyCAX9_YL4jgoTpi7J-m2enUKtnrearyJ5MnWln0fI9OkRPs43bW3V-4zlvgUy_vxVZa-IsIoER",
-    
-    CREATE_STARS: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8Fwmqvc0ojaidEz4O9CNIkM_muo02iCmWjwn1ANqIze0IgiO9DW6Eo03KXjX3LKcFKyS_R2Rz0DhRVLBInWFLgDgyPDGgZhF5yvF7kdSJbjM-TWwszuTOOFX1ZjyDiGvX185n06r0jacKUse0Kwpqb4E_Gps0tZqwe098RSf-1d6BllFGwJ8CQzPGtiHrcut7i9xBzMkOTfD3RzG2nVrywJhxQ%3D%3D"
-};
+            GET_PRODUCTS: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmR-JHhQ9PAebVpN0dkdpwiAQfVuP87_r7GDtB9_SOoQ-mm_sDrUqZkhLBqLBdazRKxkvHZ8PCjC0BpZv9hqfOgVqA0dTor17iAky-0XC64k0jvXxKxWSTT2OdcWfAJjUJAgaJPEI12VbX9teUlqEd1tQHgLElQsSWmyW5zynTLUoA42C_JjmF-Krmjg1ejRiL",
+            GET_PROFILE: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8Fwm99qFLhbTFQ3sTYq83YRSqx4dOKwmG2oP0cyR0biAt5Dn-0_YoYFEG4otpeJieFjPF0hyEVxSMTCYkfQRhqt_axefW703sXUS15FdJ9MMZcxsIqAif8NbPDVaJM-4IjgS97kN3oKHBBm4GMRAc241jySDrYtJoSv37Gz1nzbvrhJibZdjOFNcOnpRdo1jpQkw",
+            GET_REFERRAL: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmUQi9iZ35CDFXDKA_MMERjnpBcLtcVvUyN2k1dWadOc2AoUZWcnfVbi21tnIcGlQoVTQrb6BFlhINZET_FqW1Zc6-lujhu03d4VR7rtFeqGTZNEofRBukwPDUnBbiONT1j3ofGdbMEv_JK9CPsYATyFZ3wWZ48d4APT0y0YxGNiFUNH8kwUPX9UqP0BJdXTuW",
+            CREATE_PAYMENT: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8FwmllM5PaKWx8n6eouQh6e7V9fXa5HiXlTkM9bQrKdkwCw1LoVMy2xsN5nHjlk7Ny8FIQeMJPMb1F97ua09iMLmYwv0xgvp5xepVgDIz3zZuod1QKJBTk0VXlyCAX9_YL4jgoTpi7J-m2enUKtnrearyJ5MnWln0fI9OkRPs43bW3V-4zlvgUy_vxVZa-IsIoER",
+            CREATE_STARS: "https://api.telebotcreator.com/new-webhook?data=gAAAAABq8Fwmqvc0ojaidEz4O9CNIkM_muo02iCmWjwn1ANqIze0IgiO9DW6Eo03KXjX3LKcFKyS_R2Rz0DhRVLBInWFLgDgyPDGgZhF5yvF7kdSJbjM-TWwszuTOOFX1ZjyDiGvX185n06r0jacKUse0Kwpqb4E_Gps0tZqwe098RSf-1d6BllFGwJ8CQzPGtiHrcut7i9xBzMkOTfD3RzG2nVrywJhxQ%3D%3D"
         };
         // =====================================================================
 
-        const USER_ID = tg.initDataUnsafe?.user?.id || 0;
-        const ADMIN_ID = 7795597586;
-        const BOT_USERNAME = "ТВОЙ_БОТ"; // ЗАМЕНИ на юзернейм бота
+        // Безопасное получение ID пользователя
+        let USER_ID = 0;
+        try {
+            USER_ID = tg.initDataUnsafe?.user?.id || 0;
+        } catch (e) {}
 
-        let currentProduct = "";
+        const ADMIN_ID = 7795597586;
+        const BOT_USERNAME = "advokat_buy_bot"; // ЗАМЕНИ на юзернейм своего бота!
+
+        let currentProductBase = "";
         let selectedTariff = null;
         let allProducts = [];
 
-        // --- Утилиты ---
+        // --- Безопасные обертки для методов Telegram ---
+        function openTgLink(url) {
+            if (tg) tg.openTelegramLink(url);
+            else window.open(url, '_blank');
+        }
+        
+        function openWebLink(url) {
+            if (tg) tg.openLink(url);
+            else window.open(url, '_blank');
+        }
+
+        // --- Утилиты интерфейса ---
         function showScreen(id) {
             document.querySelectorAll('body > div').forEach(el => {
                 if (el.id && el.id !== 'toast') el.classList.add('hidden');
             });
-            document.getElementById(id).classList.remove('hidden');
+            const screen = document.getElementById(id);
+            if (screen) screen.classList.remove('hidden');
             if (id === 'catalog-screen') startClock();
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
+            if (!toast) return;
             toast.textContent = "🚧 " + msg;
             toast.style.opacity = 1;
             setTimeout(() => toast.style.opacity = 0, 2500);
@@ -306,7 +321,8 @@
         let clockInterval;
         function startClock() {
             const clock = document.getElementById('clock');
-            if(clockInterval) clearInterval(clockInterval);
+            if (!clock) return;
+            if (clockInterval) clearInterval(clockInterval);
             clockInterval = setInterval(() => {
                 clock.textContent = new Date().toLocaleTimeString('ru-RU');
             }, 1000);
@@ -327,37 +343,21 @@
             }
         }
 
-        // --- Инициализация ---
-        document.addEventListener("DOMContentLoaded", async () => {
-            if (USER_ID === ADMIN_ID) {
-                document.getElementById('admin-btn').classList.remove('hidden');
-            }
-            // Загружаем товары с бэкенда
-            const data = await apiRequest(CONFIG.GET_PRODUCTS, { user_id: USER_ID });
-            if (data && data.products) {
-                allProducts = data.products;
-            } else {
-                // Фоллбек, если вебхук не настроен
-                allProducts = [
-                    { name: "MagicDLC Lite 1 день", price_rub: 160, price_stars: 260, stock: 8 },
-                    { name: "MagicDLC VIP 7 дней", price_rub: 1100, price_stars: 1500, stock: 0 }
-                ];
-            }
-        });
-
-        // --- Навигация по каталогу ---
+        // --- Каталог ---
         function openVersions(baseName) {
-            currentProduct = baseName;
+            currentProductBase = baseName;
             document.getElementById('version-title').textContent = baseName + " - Выберите версию:";
             showScreen('version-screen');
         }
 
-        function openTariffs(fullName) {
+        function openTariffs(version) {
+            let fullName = currentProductBase ? currentProductBase + " " + version : version;
             document.getElementById('tariff-title').textContent = fullName;
+            
             const container = document.getElementById('tariffs-list');
             container.innerHTML = '';
 
-            const filtered = allProducts.filter(p => p.name.includes(fullName));
+            const filtered = allProducts.filter(p => p.name && p.name.includes(fullName));
             
             if (filtered.length === 0) {
                 container.innerHTML = "<p style='color:gray; text-align:center;'>Нет доступных тарифов</p>";
@@ -381,14 +381,6 @@
             showScreen('tariffs-screen');
         }
 
-        function goBackFromTariffs() {
-            if (document.getElementById('tariff-title').textContent.includes('VIP') || document.getElementById('tariff-title').textContent.includes('Lite')) {
-                showScreen('version-screen');
-            } else {
-                showScreen('catalog-screen');
-            }
-        }
-
         // --- Оплата ---
         function openPayment(product) {
             selectedTariff = product;
@@ -398,7 +390,7 @@
 
         async function payWithRubles() {
             closeModal('modal-pay-confirm');
-            tg.showPopup({ title: 'Генерация счёта', message: 'Создаём ссылку на оплату...', buttons: [{type: 'close'}] });
+            showToast("Создаём счёт...");
             
             const res = await apiRequest(CONFIG.CREATE_PAYMENT, {
                 user_id: USER_ID,
@@ -406,16 +398,15 @@
                 order_id: "ORD_" + Date.now()
             });
 
-            if (res && res.ok && res.url) {
-                tg.openLink(res.url);
+            if (res && res.url) {
+                openWebLink(res.url);
             } else {
-                tg.showAlert("Ошибка создания платежа. Попробуйте позже.");
+                showToast("Ошибка платежа. Попробуйте позже.");
             }
         }
 
         async function payWithStars() {
             closeModal('modal-pay-confirm');
-            // Отправляем запрос боту для выставления счёта в Stars
             const res = await apiRequest(CONFIG.CREATE_STARS, {
                 user_id: USER_ID,
                 amount: selectedTariff.price_stars,
@@ -423,21 +414,23 @@
             });
 
             if (res && res.ok) {
-                tg.showAlert("Счёт отправлен в чат с ботом. Пожалуйста, оплатите его там.");
-                tg.close(); // Закрываем WebApp, чтобы пользователь увидел бота
+                if (tg) tg.close();
             } else {
-                tg.showAlert("Ошибка. Попробуйте позже.");
+                showToast("Ошибка. Попробуйте позже.");
             }
         }
 
         // --- Профиль ---
         async function openProfile() {
-            const user = tg.initDataUnsafe.user;
-            document.getElementById('prof-avatar').src = user.photo_url || 'https://ui-avatars.com/api/?name=' + user.first_name + '&background=random';
-            document.getElementById('prof-name').textContent = user.first_name;
-            document.getElementById('prof-username').textContent = user.username ? '@' + user.username : '';
+            try {
+                const user = tg.initDataUnsafe.user;
+                document.getElementById('prof-avatar').src = user.photo_url || 'https://ui-avatars.com/api/?name=' + (user.first_name || 'U') + '&background=random';
+                document.getElementById('prof-name').textContent = user.first_name || 'Пользователь';
+                document.getElementById('prof-username').textContent = user.username ? '@' + user.username : '';
+            } catch (e) {
+                document.getElementById('prof-name').textContent = 'Пользователь';
+            }
 
-            // Загружаем данные из TBC
             const data = await apiRequest(CONFIG.GET_PROFILE, { user_id: USER_ID });
             
             if (data && data.ok) {
@@ -461,11 +454,8 @@
             if (data && data.ok) {
                 document.getElementById('ref-balance').textContent = data.balance || 0;
                 document.getElementById('ref-count').textContent = data.referred_count || 0;
-                document.getElementById('ref-link').textContent = `https://t.me/${BOT_USERNAME}?start=ref_${USER_ID}`;
-            } else {
-                // Фоллбек
-                document.getElementById('ref-link').textContent = `https://t.me/${BOT_USERNAME}?start=ref_${USER_ID}`;
             }
+            document.getElementById('ref-link').textContent = `https://t.me/${BOT_USERNAME}?start=ref_${USER_ID}`;
             openModal('modal-referral');
         }
 
@@ -486,6 +476,31 @@
             }
             showScreen('purchases-screen');
         }
+
+        // --- Загрузка данных при старте ---
+        window.onload = async () => {
+            if (USER_ID === ADMIN_ID) {
+                const adminBtn = document.getElementById('admin-btn');
+                if (adminBtn) adminBtn.classList.remove('hidden');
+            }
+            
+            // Временная заглушка, чтобы каталог работал даже без бота
+            allProducts = [
+                { name: "LebroDLC Lite 1 день", price_rub: 160, price_stars: 260, stock: 10 },
+                { name: "LebroDLC Lite 7 дней", price_rub: 810, price_stars: 1200, stock: 0 },
+                { name: "LebroDLC VIP 1 день", price_rub: 200, price_stars: 300, stock: 5 },
+                { name: "MagicDLC Lite 1 день", price_rub: 160, price_stars: 260, stock: 8 },
+                { name: "MagicDLC VIP 7 дней", price_rub: 1100, price_stars: 1500, stock: 3 },
+                { name: "Aqreh iOS 1 день", price_rub: 199, price_stars: 280, stock: 15 },
+                { name: "Почты Google", price_rub: 30, price_stars: 50, stock: 20 }
+            ];
+
+            // Пытаемся загрузить реальные данные из TBC
+            const data = await apiRequest(CONFIG.GET_PRODUCTS, { user_id: USER_ID });
+            if (data && data.products && data.products.length > 0) {
+                allProducts = data.products;
+            }
+        };
     </script>
 </body>
 </html>
