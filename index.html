@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Advokat client</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --secondary-bg: #1c1c1e;
+            --accent-color: #3b82f6;
+            --red-color: #ef4444;
+            --green-color: #22c55e;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 15px;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Утилиты */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .mt-20 { margin-top: 20px; }
+        
+        /* Главные кнопки */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 10px;
+            background-color: var(--secondary-bg);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:active { opacity: 0.7; }
+        .row { display: flex; gap: 10px; }
+        .row .btn { width: 50%; }
+        
+        /* Кнопки каталога */
+        .catalog-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: transparent;
+            color: white;
+            border: none;
+            font-size: 22px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .catalog-btn:active { opacity: 0.5; }
+        .catalog-btn .icon { margin-right: 15px; font-size: 24px; }
+
+        /* Статусы */
+        .status-red { color: var(--red-color); }
+        .status-green { color: var(--green-color); }
+
+        /* Модальные окна (Плашки) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.hidden { opacity: 0; pointer-events: none; display: flex !important; } /* Оставляем flex для анимации */
+        
+        .modal-content {
+            background: var(--secondary-bg);
+            width: 90%;
+            max-height: 80vh;
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+            overflow-y: auto;
+            transform: translateY(0);
+            transition: transform 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .modal-overlay.hidden .modal-content { transform: translateY(50px); }
+
+        .close-btn {
+            position: absolute;
+            top: 15px; right: 15px;
+            background: #333;
+            color: #aaa;
+            border: none;
+            border-radius: 50%;
+            width: 35px; height: 35px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Тосты (Уведомления) */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e53e3e; /* Красный */
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            z-index: 2000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s forwards;
+            opacity: 1;
+        }
+        @keyframes slideUp {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 30px; opacity: 1; }
+        }
+
+        /* Стили для профиля */
+        .profile-header { text-align: center; margin-bottom: 20px; }
+        .avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px auto; background: #333; object-fit: cover; }
+        .username { font-size: 18px; font-weight: bold; color: #60a5fa; }
+        .stat-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 15px; }
+        .stat-row span.icon { margin-right: 10px; width: 20px; text-align: center;}
+        
+        /* Формы (Админка) */
+        .admin-input {
+            width: 60px;
+            background: #000;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+        .admin-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #222; padding: 10px; border-radius: 8px;}
+    </style>
+</head>
+<body>
+
+    <!-- ================= ГЛАВНЫЙ ЭКРАН ================= -->
+    <div id="main-screen">
+        <!-- Кнопка админки (появится только если вы админ) -->
+        <div id="admin-btn-container" class="text-center hidden" style="margin-bottom: 10px;">
+            <button class="btn" style="background:#222; color:gold;" onclick="showModal('admin-modal')">⚙️ Админ-панель</button>
+        </div>
+
+        <h2 class="text-center" style="margin-top: 0;">🎧 Advokat client 🎧</h2>
+        <p class="text-center" style="color: gray; margin-top: -10px; margin-bottom: 25px;">Лучший Мод</p>
+
+        <div style="margin-bottom: 25px; background: var(--secondary-bg); padding: 15px; border-radius: 12px;">
+            <!-- Эти статусы будут браться из базы, но пока статика -->
+            <p id="status-lebro">🤍 LebroDLC: <span class="status-red">🔴 На обновлении (.)</span></p>
+            <p id="status-magic">🤍 MagicDLC: <span class="status-red">🔴 На обновлении</span></p>
+            <p id="status-aqreh">🤍 Aqreh iOS: <span class="status-green">🟢 Обновлён</span></p>
+            
+            <p style="margin-top: 15px; margin-bottom: 0; color: #a0a0a0;">Выберите действие:</p>
+        </div>
+
+        <button class="btn" onclick="showScreen('catalog-screen')">🛍 Товары</button>
+        
+        <div class="row">
+            <button class="btn" onclick="showDevToast()">🎁 Подарить ключ</button>
+            <button class="btn" onclick="showModal('purchases-modal')">📁 Мои покупки</button>
+        </div>
+        <div class="row">
+            <button class="btn" onclick="showModal('profile-modal')">👤 Профиль</button>
+            <button class="btn" onclick="showDevToast()">📊 Статистика</button>
+        </div>
+        <div class="row">
+            <button class="btn" onclick="showDevToast()">🔍 Поиск</button>
+            <button class="btn" onclick="showScreen('help-screen')">ℹ️ Помощь</button>
+        </div>
+        <button class="btn" onclick="showModal('referral-modal')">👥 Реферальная программа</button>
+        
+        <!-- Отзывы с открытием внутри ТГ -->
+        <button class="btn" onclick="tg.openTelegramLink('https://t.me/+7QwvJofq6PJmMTJi')">💬 Отзывы ↗</button>
+    </div>
+
+    <!-- ================= ЭКРАН КАТАЛОГА ================= -->
+    <div id="catalog-screen" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; margin-top: 20px;">
+            <h3 style="margin: 0; font-weight: normal; font-size: 20px;">Выберите категорию:</h3>
+            <span style="color: #555; font-size: 14px;" class="clock"></span>
+        </div>
+
+        <button class="catalog-btn" onclick="showScreen('version-screen')"><span class="icon">🛸</span> LebroDLC</button>
+        <button class="catalog-btn" onclick="showScreen('version-screen')"><span class="icon">🪄</span> MagicDLC</button>
+        <button class="catalog-btn" onclick="showScreen('tariffs-aqreh-screen')"><span class="icon">🧠</span> Aqreh iOS</button>
+        <button class="catalog-btn" onclick="showScreen('tariffs-google-screen')"><span class="icon">✉️</span> Почты Google</button>
+
+        <button class="catalog-btn mt-20" onclick="showScreen('main-screen')"><span class="icon">↩️</span> Назад</button>
+    </div>
+
+    <!-- ================= ЭКРАН ВЕРСИИ (VIP/Lite) ================= -->
+    <div id="version-screen" class="hidden">
+        <h3 class="text-center mt-20">Выберите версию:</h3>
+        <div class="mt-20">
+            <button class="catalog-btn" onclick="showScreen('tariffs-lite-screen')"><span class="icon">🪄</span> Lite</button>
+            <button class="catalog-btn" onclick="showScreen('tariffs-vip-screen')"><span class="icon">⭐</span> VIP</button>
+        </div>
+        <button class="catalog-btn mt-20" onclick="showScreen('catalog-screen')"><span class="icon">↩️</span> Назад</button>
+    </div>
+
+    <!-- ================= ЭКРАН ТАРИФОВ (Пример Lite) ================= -->
+    <div id="tariffs-lite-screen" class="hidden">
+        <div style="background: var(--secondary-bg); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+            <h3 style="margin-top:0;">🪄 MagicDLC Lite</h3>
+            <p>Базовый набор возможностей для Oxide: Survival Island</p>
+            <p>Доступные тарифы:</p>
+        </div>
+        <!-- Кнопки с наличием -->
+        <button class="btn" onclick="showPaymentModal()">✓ MagicDLC Lite 1 день — 160₽ (8 шт.)</button>
+        <button class="btn" style="color: #888;" onclick="showNoStockToast()">⊗ MagicDLC Lite 7 дней — 810₽</button>
+        <button class="btn" style="color: #888;" onclick="showNoStockToast()">⊗ MagicDLC Lite 14 дней — 1149₽</button>
+        
+        <button class="catalog-btn mt-20" onclick="showScreen('version-screen')"><span class="icon">↩️</span> Назад</button>
+    </div>
+
+    <!-- ================= ЭКРАН ПОМОЩИ ================= -->
+    <div id="help-screen" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; margin-top: 20px;">
+            <h3 style="margin: 0; font-weight: normal; font-size: 20px;">📋 Помощь. Выберите раздел:</h3>
+            <span style="color: #555; font-size: 14px;" class="clock"></span>
+        </div>
+        
+        <button class="btn" onclick="tg.openTelegramLink('https://t.me/Advokat_mngr')">🆘 Поддержка ↗</button>
+        <button class="btn" onclick="showModal('privacy-modal')">📄 Политика конфиденциальности</button>
+        <button class="btn" onclick="showModal('rules-modal')">📜 Правила пользования</button>
+        
+        <button class="catalog-btn mt-20" onclick="showScreen('main-screen')"><span class="icon">↩️</span> Назад</button>
+    </div>
+
+    <!-- ================= МОДАЛЬНЫЕ ОКНА ================= -->
+
+    <!-- Профиль -->
+    <div id="profile-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">✕</button>
+            <div class="profile-header">
+                <img id="user-avatar" class="avatar" src="https://ui-avatars.com/api/?name=User&background=random" alt="avatar">
+                <div id="user-name" class="username">(@username)</div>
+                <div style="color: #888; font-size: 14px; margin-top: 5px;">Регистрация: 2026-07-26 21:09</div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <div class="stat-row"><span class="icon">🛍</span> Всего покупок: 4 шт.</div>
+                <div class="stat-row"><span class="icon">💰</span> Всего потрачено: 1363₽</div>
+                <div class="stat-row"><span class="icon">👑</span> Место в топе: #23 из 206</div>
+            </div>
+            <div style="border-top: 1px solid #333; padding-top: 15px; margin-bottom: 20px;">
+                <div class="stat-row" style="font-weight: bold; margin-bottom: 10px;"><span class="icon">📁</span> Купленные товары:</div>
+                <div style="font-size: 14px; color: #ccc; line-height: 1.5;">
+                    • MagicDLC 7 дней — 1 шт. / 850₽<br>
+                    • MagicDLC 1 день — 3 шт. / 513₽
+                </div>
+            </div>
+            <button class="btn" style="background:#e53e3e;" onclick="tg.openTelegramLink('https://t.me/Advokat_mngr')">🆘 Связаться с менеджером</button>
+            <button class="btn" onclick="closeModal(event)">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Мои покупки (Заглушка) -->
+    <div id="purchases-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">✕</button>
+            <h3 class="text-center">📁 Мои покупки</h3>
+            <p class="text-center" style="color:#888;">У вас пока нет покупок.</p>
+            <button class="btn" onclick="closeModal(event)">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Рефералка -->
+    <div id="referral-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">✕</button>
+            <h3 class="text-center">🔗 РЕФЕРАЛЬНАЯ ПРОГРАММА</h3>
+            <hr style="border-color:#333;">
+            <div class="stat-row"><span class="icon">💰</span> Ваши баллы: 0</div>
+            <div class="stat-row"><span class="icon">👥</span> Приглашено человек: 0</div>
+            <div class="stat-row"><span class="icon">🎁</span> За каждого человека: +4 баллов</div>
+            <hr style="border-color:#333;">
+            <p style="font-size: 14px; line-height: 1.5;">
+                ⭐ <b>Как это работает</b><br>
+                ✓ Отправьте человеку вашу ссылку<br>
+                ✓ Когда он запустит бота и примет соглашение — вы получите баллы<br>
+                ✓ 1 балл = 1₽ — можно списывать при оплате любого товара<br><br>
+                🎁 <b>Бонус для приглашённого:</b><br>
+                ✓ Вечная скидка 5% от каждой покупки — баллами на баланс<br>
+                ✓ Баллы начисляются автоматически после каждой оплаты
+            </p>
+            <hr style="border-color:#333;">
+            <p style="font-size: 14px;">🔗 Ваша ссылка:</p>
+            <div style="background:#000; padding:10px; border-radius:8px; font-size:12px; word-break: break-all;" id="ref-link">
+                https://t.me/your_bot?start=ref_123456789
+            </div>
+            <button class="btn mt-20" onclick="closeModal(event)">В главное меню</button>
+        </div>
+    </div>
+
+    <!-- Политика (Модалка с текстом) -->
+    <div id="privacy-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">✕</button>
+            <h3 class="text-center">📄 Политика конфиденциальности</h3>
+            <div style="font-size: 14px; line-height: 1.5; color: #ccc;">
+                Проект «ADVOKAT MAUD» уважает вашу конфиденциальность.<br><br>
+                1. <b>Сбор данных</b>: Собираем только Telegram ID, username, историю заказов.<br>
+                2. <b>Использование</b>: Только для обработки заказов и поддержки.<br>
+                3. <b>Передача третьим лицам</b>: Не передаем, кроме случаев, предусмотренных законом.<br>
+                4. <b>Хранение</b>: На защищенных серверах, удаляем по запросу.<br>
+                5. <b>Согласие</b>: Используя бота, вы соглашаетесь с этим.<br><br>
+                <i>Дата актуализации: 08.11.2026</i>
+            </div>
+            <button class="btn mt-20" onclick="tg.openLink('https://telegra.ph/Politika-konfidencialnosti-08-01-83')">Открыть полную версию</button>
+            <button class="btn" onclick="closeModal(event)">Понятно</button>
+        </div>
+    </div>
+
+    <!-- Правила (Модалка с текстом) -->
+    <div id="rules-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">✕</button>
+            <h3 class="text-center">📜 Правила пользования</h3>
+            <div style="font-size: 14px; line-height: 1.5; color: #ccc;">
+                1. <b>Общие положения</b>: Используя бота, вы соглашаетесь с правилами.<br>
+                2. <b>Услуги</b>: Цифровые товары (ключи). Момент передачи ключа = оказание услуги.<br>
+                3. <b>Возврат</b>: Не производится из-за цифрового характера. Обмен только при неработоспособности.<br>
+                4. <b>Ответственность</b>: Проект не несет ответственности за последствия использования ключей.<br>
+                5. <b>Изменения</b>: Оставляем за собой право менять правила.<br>
+                6. <b>Контакты</b>: @Advokat_mngr<br><br>
+                <i>Дата актуализации: 08.11.2026</i>
+            </div>
+            <button class="btn mt-20" onclick="tg.openLink('https://telegra.ph/Polzovatelskoe-soglashenie-04-01-19')">Открыть полную версию</button>
+            <button class="btn" onclick="closeModal(event)">Понятно</button>
+        </div>
+    </div>
+
+    <!-- Модалка оплаты (Подтверждение) -->
+    <div id="payment-confirm-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal-content">
+            <h3 class="text-center">⚠️ Вы действительно хотите оплатить товар звёздами?</h3>
+            <p style="text-align: center; color: #aaa;">Сейчас самая маленькая цена при оплате Картой / СБП. Выберите «Да» для продолжения или «Нет» для возврата к выбору.</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" style="background: var(--green-color);" onclick="proceedToPayment()">✅ Да, оплатить</button>
+                <button class="btn" style="background: var(--red-color);" onclick="closeModal(event)">❌ Нет, вернуться</button>
+            </div>
+            <div style="background: #111; padding: 15px; border-radius: 12px; margin-top: 20px; text-align: center;">
+                <div style="color: #60a5fa; font-size: 14px;">Оплата MagicDLC Lite 1 день</div>
+                <div style="font-size: 18px; margin: 10px 0;">Цена с учётом комиссии: 260 ⭐</div>
+                <button class="btn" style="background:#2c2c2e;" onclick="proceedToPayment()">Заплатить ⭐ 260</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Админка -->
+    <div id="admin-modal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">✕</button>
+            <h3 class="text-center" style="color:gold;">⚙️ Админ-панель</h3>
+            <p style="color:#888; font-size:12px; text-align:center;">Изменение товаров (MagicDLC Lite 1 день)</p>
+            
+            <div class="admin-row">
+                <span>Наличие:</span>
+                <label style="display:flex; align-items:center; cursor:pointer;">
+                    <input type="checkbox" checked style="margin-right:10px; transform: scale(1.2);"> Вкл
+                </label>
+            </div>
+            <div class="admin-row">
+                <span>Количество (шт):</span>
+                <input type="number" class="admin-input" value="8">
+            </div>
+            <div class="admin-row">
+                <span>Цена (₽):</span>
+                <input type="number" class="admin-input" value="160">
+            </div>
+            <div class="admin-row">
+                <span>Цена (Stars):</span>
+                <input type="number" class="admin-input" value="260">
+            </div>
+            
+            <p style="color:#888; font-size:12px; text-align:center; margin-top:20px;">Изменение статуса на главной</p>
+            <div class="admin-row">
+                <span>LebroDLC:</span>
+                <select class="admin-input" style="width: 120px; background:#000; color:#fff;">
+                    <option>🟢 Обновлён</option>
+                    <option selected>🔴 На обновлении</option>
+                </select>
+            </div>
+
+            <button class="btn mt-20" onclick="closeModal(event); showDevToast('Сохранено (симуляция)');">💾 Сохранить</button>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Разворачиваем на весь экран
+        tg.setHeaderColor('secondary_bg_color'); // Красим шапку под фон
+
+        // ==== 1. ИНИЦИАЛИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ ====
+        const user = tg.initDataUnsafe?.user;
+        const ADMIN_ID = 123456789; // ВАШ ID ЗАМЕНИТЕ ЗДЕСЬ
+
+        if (user) {
+            // Подставляем аватарку и ник в профиль
+            if (user.photo_url) {
+                document.getElementById('user-avatar').src = user.photo_url;
+            }
+            document.getElementById('user-name').innerText = `(@${user.username || user.first_name})`;
+            
+            // Генерируем реферальную ссылку
+            const refLink = `https://t.me/ваш_бот?start=ref_${user.id}`; 
+            document.getElementById('ref-link').innerText = refLink;
+
+            // Проверка на админа
+            if (user.id === ADMIN_ID) {
+                document.getElementById('admin-btn-container').classList.remove('hidden');
+            }
+        }
+
+        // ==== 2. НАВИГАЦИЯ ПО ЭКРАНАМ ====
+        function showScreen(screenId) {
+            // Скрываем все экраны
+            ['main-screen', 'catalog-screen', 'version-screen', 'tariffs-lite-screen', 'help-screen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            // Показываем нужный
+            document.getElementById(screenId).classList.remove('hidden');
+            
+            // Запуск часов на некоторых экранах
+            if(screenId === 'catalog-screen' || screenId === 'help-screen') {
+                updateClock();
+            }
+        }
+
+        // ==== 3. МОДАЛЬНЫЕ ОКНА (Плашки) ====
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(event) {
+            // Закрываем только если кликнули по фону или крестику
+            if (!event || event.target.classList.contains('modal-overlay') || event.target.classList.contains('close-btn') || event.target.innerText === 'Закрыть' || event.target.innerText === 'Понятно' || event.target.innerText === 'В главное меню' || event.target.innerText === 'Нет, вернуться') {
+                
+                // Если нажали "В главное меню", перекидываем на главный экран
+                if (event && event.target.innerText === 'В главное меню') {
+                    showScreen('main-screen');
+                }
+                
+                const modals = document.querySelectorAll('.modal-overlay');
+                modals.forEach(m => m.classList.add('hidden'));
+            }
+        }
+
+        // ==== 4. УВЕДОМЛЕНИЯ (Тосты) ====
+        function showToast(message, bgColor = 'var(--red-color)') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.backgroundColor = bgColor;
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        function showDevToast(msg = '🚧 В разработке') {
+            showToast(msg);
+        }
+
+        function showNoStockToast() {
+            showToast('😔 Товара нет в наличии.');
+        }
+
+        // ==== 5. ОПЛАТА ====
+        function showPaymentModal() {
+            showModal('payment-confirm-modal');
+        }
+
+        function proceedToPayment() {
+            closeModal();
+            // Здесь будет вызов Telegram.WebApp.openInvoice() или редирект Platega
+            showToast('Переход к оплате...', '#2b6cb0');
+        }
+
+        // ==== 6. ЧАСЫ ====
+        function updateClock() {
+            const clocks = document.querySelectorAll('.clock');
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ru-RU');
+            clocks.forEach(c => c.innerText = timeString);
+        }
+        setInterval(updateClock, 1000);
+
+        // Сообщаем Telegram, что приложение готово
+        tg.ready();
+    </script>
+</body>
+</html>
